@@ -1,0 +1,158 @@
+<launch>
+  <arg name="robot_dof" default="6" />
+  <arg name="paused" default="false" doc="Starts gazebo in paused mode" />
+  <arg name="gui" default="true" doc="Starts gazebo gui" />
+  <arg name="effort_control" default="false"/>
+  <arg name="velocity_control" default="false"/>
+  <arg name="namespace" default="xarm"/>
+  <arg name="model1300" default="false" />
+  <arg name="add_realsense_d435i" default="true" />
+  <arg name="add_d435i_links" default="false" />
+  <arg name="robot_sn" default="" />
+  <arg name="namespace2" default="xarm2"/>
+  <arg name="robot_type" default="xarm" /> 
+
+  <!-- startup simulated world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find xarm_gazebo)/worlds/xarm_camera_scene.world"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+
+  <!-- ===================== ROBOT A ===================== -->
+  
+  <arg name="robot_controller_name" value="$(eval 'xarm' + str(arg('robot_dof')) + ('_velo_traj_controller' if arg('velocity_control') else '_traj_controller'))"/>
+  <arg name="gripper_controller_name" value="$(eval 'gripper_velo_traj_controller' if arg('velocity_control') else 'gripper_traj_controller')"/>
+
+  <group ns="$(arg namespace)">
+
+    <!-- Params específicos del robot A -->
+    <rosparam file="$(eval find(str(arg('robot_type')) + str(arg('robot_dof')) + '_moveit_config') + '/config/' + str(arg('robot_type')) + str(arg('robot_dof')) + '_params.yaml')" command="load"/>
+    <rosparam file="$(find xarm_controller)/config/gripper/gripper_gazebo_ros_control.yaml" command="load"/>
+
+    <!-- YAML del brazo (DOF=6) -->
+    <rosparam command="load"
+              file="$(find xarm_controller)/config/xarm6/xarm6_controllers.yaml"/>
+
+    <!-- YAML del gripper -->
+    <rosparam command="load"
+              file="$(find xarm_controller)/config/gripper/gripper_controllers.yaml"/>
+
+    <node name="controller_spawner"
+          pkg="controller_manager" type="spawner" output="screen"
+          args="joint_state_controller xarm$(arg robot_dof)_traj_controller gripper_traj_controller
+                --namespace=/$(arg namespace)"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro
+      --inorder '$(find xarm_description)/urdf/xarm_device.urdf.xacro' robot_type:=$(arg robot_type) limited:=true add_gripper:=true use_gazebo_camera:=true dof:=$(arg robot_dof)
+      effort_control:=$(arg effort_control) velocity_control:=$(arg velocity_control) model1300:=$(arg model1300)
+      add_realsense_d435i:=$(arg add_realsense_d435i)
+      add_d435i_links:=$(arg add_d435i_links)
+      robot_sn:=$(arg robot_sn)
+      hw_ns:=$(arg namespace)
+    "/>
+
+    <param name="robot_description_semantic"
+      command="$(find xacro)/xacro --inorder '$(find xarm_description)/srdf/xarm.srdf.xacro' dof:=$(arg robot_dof) add_gripper:=true robot_type:=$(arg robot_type)" />
+
+    <group ns="robot_description_planning">
+      <rosparam file="$(eval find('xarm' + str(arg('robot_dof')) + '_gripper_moveit_config') + '/config/joint_limits.yaml')" command="load"/>
+    </group>
+
+    <group ns="robot_description_kinematics">
+      <rosparam file="$(eval find('xarm' + str(arg('robot_dof')) + '_gripper_moveit_config') + '/config/kinematics.yaml')" command="load"/>
+    </group>
+
+    <!-- Controladores -->
+    <include file="$(find xarm_controller)/launch/xarm$(arg robot_dof)_control.launch">
+      <arg name="run_demo_traj" value="false"/>
+      <arg name="effort_control" value="$(arg effort_control)"/>
+      <arg name="velocity_control" value="$(arg velocity_control)"/>
+      <arg name="add_gripper" value="true"/>
+    </include>
+
+    <remap from="arm_controller/follow_joint_trajectory"
+         to="/xarm/xarm6_traj_controller/follow_joint_trajectory"/>
+    <remap from="gripper_controller/follow_joint_trajectory"
+          to="/xarm/gripper_traj_controller/follow_joint_trajectory"/>
+
+    <!-- MoveIt -->
+    <include file="$(eval find(str(arg('robot_type')) + str(arg('robot_dof')) + '_gripper_moveit_config') + '/launch/move_group.launch')">
+      <arg name="allow_trajectory_execution" value="true"/>
+      <arg name="fake_execution" value="false"/>
+      <arg name="info" value="true"/>
+      <arg name="debug" value="false"/>
+      <arg name="gripper_controller" value="true"/>
+    </include>
+
+    <!-- Spawning en Gazebo usando el param namespaced -->
+    <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+          args="-gazebo_namespace /gazebo -urdf -model xarm$(arg robot_dof) -x 0 -y 0 -z 0.775 -Y 0 -param /$(arg namespace)/robot_description"/>
+
+  </group>
+
+
+<!-- ===================== ROBOT B ===================== -->
+  <arg name="robot_controller_name2" value="$(eval 'xarm' + str(arg('robot_dof')) + ('_velo_traj_controller' if arg('velocity_control') else '_traj_controller'))"/>
+  <arg name="gripper_controller_name2" value="$(eval 'gripper_velo_traj_controller' if arg('velocity_control') else 'gripper_traj_controller')"/>
+
+  <group ns="$(arg namespace2)">
+
+    <rosparam file="$(eval find('xarm' + str(arg('robot_dof')) + '_moveit_config') + '/config/xarm' + str(arg('robot_dof')) + '_params.yaml')" command="load"/>
+    <rosparam file="$(find xarm_controller)/config/gripper/gripper_gazebo_ros_control.yaml" command="load"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro
+      --inorder '$(find xarm_description)/urdf/xarm_device.urdf.xacro' robot_type:=$(arg robot_type) limited:=true add_gripper:=true use_gazebo_camera:=true dof:=$(arg robot_dof)
+      effort_control:=$(arg effort_control) velocity_control:=$(arg velocity_control) model1300:=$(arg model1300)
+      add_realsense_d435i:=$(arg add_realsense_d435i)
+      add_d435i_links:=$(arg add_d435i_links)
+      robot_sn:=$(arg robot_sn)
+      hw_ns:=$(arg namespace2)
+    "/>
+
+    <rosparam command="load"
+              file="$(find xarm_controller)/config/xarm6/xarm6_controllers.yaml"/>
+
+    <rosparam command="load"
+              file="$(find xarm_controller)/config/gripper/gripper_controllers.yaml"/>
+
+    <node name="controller_spawner_b"
+          pkg="controller_manager" type="spawner" output="screen"
+          args="joint_state_controller xarm$(arg robot_dof)_traj_controller gripper_traj_controller
+                --namespace=/$(arg namespace2)"/>
+
+    <param name="robot_description_semantic"
+      command="$(find xacro)/xacro --inorder '$(find xarm_description)/srdf/xarm.srdf.xacro' dof:=$(arg robot_dof) add_gripper:=true robot_type:=$(arg robot_type)" />
+
+    <group ns="robot_description_planning">
+      <rosparam file="$(eval find('xarm' + str(arg('robot_dof')) + '_gripper_moveit_config') + '/config/joint_limits.yaml')" command="load"/>
+    </group>
+
+    <group ns="robot_description_kinematics">
+      <rosparam file="$(eval find('xarm' + str(arg('robot_dof')) + '_gripper_moveit_config') + '/config/kinematics.yaml')" command="load"/>
+    </group>
+
+    <remap from="arm_controller/follow_joint_trajectory" to="/$(arg namespace2)/$(arg robot_controller_name2)/follow_joint_trajectory"/>
+    <remap from="gripper_controller/follow_joint_trajectory" to="/$(arg namespace2)/$(arg gripper_controller_name2)/follow_joint_trajectory"/>
+
+    <include file="$(eval find(str(arg('robot_type')) + str(arg('robot_dof')) + '_gripper_moveit_config') + '/launch/move_group.launch')">
+      <arg name="allow_trajectory_execution" value="true"/>
+      <arg name="fake_execution" value="false"/>
+      <arg name="info" value="true"/>
+      <arg name="debug" value="false"/>
+      <arg name="gripper_controller" value="true"/>
+    </include>
+
+    <include file="$(find xarm_controller)/launch/xarm$(arg robot_dof)_control.launch">
+      <arg name="run_demo_traj" value="false"/>
+      <arg name="effort_control" value="$(arg effort_control)"/>
+      <arg name="velocity_control" value="$(arg velocity_control)"/>
+      <arg name="add_gripper" value="true"/>
+    </include>
+
+    <node name="spawn_gazebo_model_b" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+          args="-gazebo_namespace /gazebo -urdf -model xarm$(arg robot_dof)_b -x 1 -y 0 -z 0.85 -Y 3.1416 -param /$(arg namespace2)/robot_description"/>
+
+  </group>
+
+</launch>
