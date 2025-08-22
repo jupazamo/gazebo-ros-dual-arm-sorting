@@ -353,6 +353,94 @@ A ROS node that **verifies cube placement by color**, highlights any misplacemen
 [INFO] ✓ Todos los tapetes tienen bloques correctos.
 [INFO] ✓ Tarea completada... publicando /zones_clear=True
 ```
+
+---
+### `color\_recognition.py`
+
+A ROS node that finishes the workflow by **sorting the remaining cubes** (those left at the table center) **by color**, one color at a time. It subscribes to a compressed RGB camera stream, detects colored blocks via OpenCV (HSV masking + contour geometry), and commands the xArm manipulator (MoveIt) to pick each block and place it on its designated mat.
+
+**What this node does**
+
+1. **Subscribe to camera**: `/camera/image_raw/compressed` → convert to OpenCV image with `CvBridge`.
+2. **Detect blocks by color**: For each color (red, blue, green, yellow), compute an HSV mask, find contours, and filter small noise.
+3. **Avoid re-processing**: Keep per-color memory (`classified_centers`) and ignore blocks already handled or those already at their destination (near drop/mat).
+4. **Plan + execute**: When a new block for the current color is found, send a pick-and-place task to a motion thread (MoveIt group for arm + gripper).
+5. **Visual feedback**: Overlay a minAreaRect and status text. While the arm is moving, track only the active block.
+6. **Stop condition**: If no more blocks are found and the arm is idle, the node exits gracefully.
+
+**ROS interfaces**
+
+* **Subscriber**: `sensor_msgs/CompressedImage` on `camera/image_raw/compressed` (class `GazeboCamera`).
+* **No publishers**: The node logs to ROS console and shows OpenCV windows for visualization.
+* **Parameters used**:
+
+  * `~robot_type` (default: `xarm`) → MoveIt group names.
+  * `/xarm/DOF` (default: `6`) → select MoveIt planning group (e.g., `xarm6`).
+
+**Vision pipeline (OpenCV)**
+
+* **Gaussian blur** → `cv2.cvtColor(..., BGR2HSV)` → **erosion** to denoise → `cv2.inRange()` for color mask.
+* **Contours**: `cv2.findContours()` on the mask, then **minAreaRect** to get center and orientation.
+* **Filtering**:
+
+  * Discard very small rectangles (`rect[1][0] < 8 or rect[1][1] < 8`).
+  * Discard blocks already at destination (close to `COLOR_TARGET_ZONE[color]`).
+  * Discard blocks already processed for that color (`classified_centers`).
+* **Helpers**:
+
+  * `draw_minarearect(...)` to render detections.
+  * `rect_to_xy_mm(...)` converts pixel centers → table-frame millimeters using the calibrated linear map.
+  * `nearest_rect(...)` to keep tracking the currently moving block.
+
+**Color ranges (HSV)** — stored in `COLOR_DICT`:
+
+* `red`, `blue`, `green`, `yellow` with `{lower, upper}` thresholds.
+
+> Tune these with the `hsv_inspector.py` helper if needed.
+
+**Motion pipeline (MoveIt)**
+
+* **Arm controller**: `XArmCtrl` (MoveGroupCommander for `xarm<dof>`), simple `moveto(x,y,z)` API.
+* **Gripper**: `GripperCtrl` with named targets `open` and `close`.
+* **Execution thread**: `GazeboMotionThread` pops tasks from a `Queue`, then:
+
+  1. Lift to safe Z
+  2. Move above block → descend → **close** gripper
+  3. Lift → move to the target mat (per color) → **open** gripper
+* **Targets**: `COLOR_TARGET_ZONE` (mm in table frame).
+
+**Important constants to tune**
+
+* `COLOR_DICT` — HSV thresholds per color (dependent on lighting/rendering).
+* `COLOR_TARGET_ZONE` — target positions (mm) for each color.
+* `DROP_ZONE_PX` — approximate pixel locations for UI/heuristics.
+* Size filter inside `get_recognition_rect(...)` — removes tiny noise (<8 px side in the minAreaRect).
+* Window/UI sizing (class `Display`) — change `size=(960,540)` or call `cv2.resizeWindow(...)` as done in `__main__`.
+
+**Execution flow (high level)**
+
+```text
+start node → init MoveIt and camera → while not shutdown:
+  if arm is moving and a color is active:
+    track only that block and draw UI
+  else:
+    for each color in randomized order:
+      detect blocks of that color
+      filter already-placed / previously-processed
+      if new block found:
+        draw UI, enqueue motion (pick & place), set active color/center
+        break (handle one block per loop)
+  if no tasks found and arm idle → log ✓ and shutdown
+```
+
+**Key code map**
+
+* **Camera**: `GazeboCamera` (subscriber + queue) → `get_frame()`.
+* **Vision**: `get_recognition_rect(...)`, `draw_minarearect(...)`, `rect_to_xy_mm(...)`.
+* **Control**: `XArmCtrl`, `GripperCtrl`, `GazeboMotionThread` (worker thread).
+* **UI**: `Display.show(...)` overlays status and resizes window; additional manual `cv2.resizeWindow("Sorter Camera", 640, 480)` in `__main__`.
+* **State**: `classified_centers` to prevent double-handling; `current_color` & `current_center_px` for tracking during motion.
+
 ---
 
 ## 📸 Results
