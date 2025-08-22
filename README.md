@@ -443,34 +443,44 @@ start node → init MoveIt and camera → while not shutdown:
 
 ---
 
-## 📸 Results
+<h2>📸 Results</h2>
 
-**Figure 1.** Fase 1 – Random selection of four cubes without repetition.  
-![Figure 1](docs/fig1_random_selection.png)
+<p><b>Figure 1.</b> Fase 1 – Random selection of four cubes without repetition.<br>
+<img src="docs/fig1_random_selection.png" width="500">
+</p>
 
-**Figure 2.** Coordinate calculation for the selected cube.  
-![Figure 2](docs/fig2_coordinate_calculation.png)
+<p><b>Figure 2.</b> Coordinate calculation for the selected cube.<br>
+<img src="docs/fig2_coordinate_calculation.png" width="500">
+</p>
 
-**Figure 3.** Execution of movement: red cube.  
-![Figure 3](docs/fig3_move_red.png)
+<p><b>Figure 3.</b> Execution of movement: red cube.<br>
+<img src="docs/fig3_move_red.png" width="500">
+</p>
 
-**Figure 4.** Execution of movement: green cube.  
-![Figure 4](docs/fig4_move_green.png)
+<p><b>Figure 4.</b> Execution of movement: green cube.<br>
+<img src="docs/fig4_move_green.png" width="500">
+</p>
 
-**Figure 5.** Execution of movement: yellow cube.  
-![Figure 5](docs/fig5_move_yellow.png)
+<p><b>Figure 5.</b> Execution of movement: yellow cube.<br>
+<img src="docs/fig5_move_yellow.png" width="500">
+</p>
 
-**Figure 6.** Execution of movement: blue cube.  
-![Figure 6](docs/fig6_move_blue.png)
+<p><b>Figure 6.</b> Execution of movement: blue cube.<br>
+<img src="docs/fig6_move_blue.png" width="500">
+</p>
 
-**Figure 7.** Result of random redistribution in Gazebo.  
-![Figure 7](docs/fig7_random_result.png)
+<p><b>Figure 7.</b> Result of random redistribution in Gazebo.<br>
+<img src="docs/fig7_random_result.png" width="500">
+</p>
 
-**Figure 8.** Verification process by the second robot.  
-![Figure 8](docs/fig8_verification.png)
+<p><b>Figure 8.</b> Verification process by the second robot.<br>
+<img src="docs/fig8_verification.png" width="500">
+</p>
 
-**Figure 9.** Correction of cube placement.  
-![Figure 9](docs/fig9_correction.png)
+<p><b>Figure 9.</b> Correction of cube placement.<br>
+<img src="docs/fig9_correction.png" width="500">
+</p>
 
-**Figure 10.** Final arrangement of all cubes.  
-![Figure 10](docs/fig10_final_arrangement.png)
+<p><b>Figure 10.</b> Final arrangement of all cubes.<br>
+<img src="docs/fig10_final_arrangement.png" width="500">
+</p>
