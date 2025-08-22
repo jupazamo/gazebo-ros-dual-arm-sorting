@@ -1,92 +1,91 @@
 # Gazebo ROS Dual Arm Sorting
 
-A ROS-based simulation project for controlling two robotic arms in Gazebo to perform an automated sorting task.
-The system is capable of detecting cube colors, planning grasping motions, and placing each cube in its designated location.
+A ROS-based simulation project for controlling two robotic arms in Gazebo to perform an automated sorting task. The system detects cube colors, plans grasping motions, and places each cube in its designated location.
 
 ## 📌 Overview
 
-This project simulates a **dual robotic arm sorting station** using **ROS** and **Gazebo**.
-It integrates motion planning, perception, and manipulation to achieve an autonomous sorting workflow:
+This project simulates a **dual robotic arm sorting station** using **ROS** and **Gazebo**, integrating motion planning, perception, and manipulation:
 
-1. One robotic arm simulates a user, placing four differently colored cubes each in a distinct zone without repetition.
-2. The second robotic arm checks whether the cubes have been placed correctly.
-3. This same arm repositions any cubes placed incorrectly.
-4. Finally, it analyzes the remaining cubes and organizes them by color accordingly.
+1. One arm simulates a user, placing four differently colored cubes each in a unique zone without repetition.
+2. The second arm checks whether the cubes are correctly placed.
+3. It repositions incorrectly placed cubes.
+4. It organizes remaining cubes by color.
 
-The project was adapted from **UFactory's xArm ROS packages**, with custom modifications for the sorting application.
+Color detection uses **OpenCV**, and the available camera model is **RealSense D435**.
 
 ## ✨ Features
 
-* Dual-arm robot simulation in Gazebo.
-* Color-based cube detection using OpenCV.
-* Utilizes a RealSense D435 camera model included in the repository.
-* Grasping and placing tasks using MoveIt.
-* Predefined sorting positions for each cube color.
-* Fully ROS-integrated with launch files for quick setup.
+* Dual-arm robot simulation in Gazebo
+* Color-based detection with OpenCV
+* RealSense D435 camera model
+* Grasping and placing with MoveIt
+* Predefined sorting positions per color
+* ROS-integrated launch files for quick setup
 
 ## 📦 Requirements
 
-* **ROS Noetic** (recommended)
-* **Gazebo 11**
-* **MoveIt** for motion planning
-* `xarm_ros` package (included in this repository)
+* ROS Noetic
+* Gazebo 11
+* MoveIt
 * Ubuntu 20.04 LTS
 
 ## ⚙️ Installation
 
 ```bash
-# Clone the repository inside your ROS workspace
 cd ~/catkin_ws/src
 git clone https://github.com/jupazamo/gazebo-ros-dual-arm-sorting.git
-
-# Build the workspace
 cd ~/catkin_ws
 catkin_make
-
-# Source the workspace
 source devel/setup.bash
 ```
 
 ## 🚀 Usage
 
-To launch the full simulation:
+Run in separate terminals:
 
 ```bash
-roslaunch xarm_gazebo xarm_camera_scene.launch   # Run this in the first terminal
-rosrun xarm_gazebo script_launcher.py            # Run this in a separate terminal
+roslaunch xarm_gazebo xarm_camera_scene.launch
+rosrun xarm_gazebo script_launcher.py
 ```
-
-**Example workflow:**
-
-1. The Gazebo environment loads with two robotic arms and colored cubes.
-2. The perception node detects cube colors and positions.
-3. The motion planner generates pick-and-place trajectories.
-4. Each cube is placed in its designated location.
 
 ## 📂 Repository Structure
 
 ```
 xarm_ros/
- ├── launch/         # Launch files for simulation and control
- ├── scripts/        # Custom scripts for sorting logic
- ├── config/         # MoveIt and robot configuration files
- ├── urdf/           # Robot models
- └── worlds/         # Gazebo world with sorting environment
+ ├── LICENSE
+ ├── README.md
+ ├── uf_robot_moveit_config/
+ ├── xarm6_moveit_config/
+ ├── xarm_bringup/
+ ├── xarm_description/
+ ├── xarm_gripper/
+ ├── xarm_msgs/
+ ├── xarm_sdk/
+ ├── xarm6_gripper_moveit_config/
+ ├── xarm_api/
+ ├── xarm_controller/
+ ├── xarm_gazebo/
+ │   ├── CMakeLists.txt
+ │   ├── package.xml
+ │   ├── launch/
+ │   │   └── xarm_camera_scene.launch
+ │   ├── scripts/
+ │   │   ├── color_recognition.py
+ │   │   ├── hsv_inspector.py
+ │   │   ├── script_launcher.py
+ │   │   ├── xarm2_random_placer.py
+ │   │   └── zone_checker.py
+ │   └── worlds/
+ │       └── xarm_camera_scene.world
+ ├── xarm_moveit_servo/
+ └── xarm_planner/
 ```
 
 ## 📸 Results
 
 ![Simulation Example](docs/simulation_example.png)
 
-*Dual-arm sorting station in action.*
+## 🙌 Acknowledgements
 
-## 📜 License
-
-```
-Copyright (c) 2018, UFACTORY Inc.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
-[... full BSD-3-Clause license text ...]
-```
+* **UFactory** for the original `xarm_ros` package
+* ROS and Gazebo communities for open-source tools
