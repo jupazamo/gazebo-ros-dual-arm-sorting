@@ -238,6 +238,122 @@ Soltando en (Mesa: 635.0, -245.0)
 ```
 
 ---
+### `zone_checker.py`
+
+A ROS node that **verifies cube placement by color**, highlights any misplacements in the camera view, and **commands the arm** to relocate erroneous cubes to their correct mats. When the workspace is clean (all cubes correctly placed), it **publishes** `/zones_clear=True` and shuts down.
+
+**What this node does**
+
+* Subscribes to a **compressed camera stream** and detects color blobs (OpenCV HSV).
+* Converts pixel detections to **table-frame millimeters** with a calibrated mapping.
+* Checks if each detected cube is inside its **target color zone**.
+* If a cube is **misplaced**, it enqueues a pick-and-place correction for the manipulator.
+* Draws an annotated camera overlay:
+
+  * **Green** boxes = correct placements
+  * **Gray** boxes = cubes in the center (off mats)
+  * **Red** boxes = misplaced cubes (also labeled `color @ zone`)
+  * **Yellow** box = the cube currently being corrected (tracked during motion)
+* Publishes `/zones_clear=True` when no errors remain and the arm is idle.
+
+**Where it fits in the workflow**
+
+1. User (or the first arm) places cubes in random mats.
+2. **`zone_checker.py`** analyzes live detections and corrects any misplacements.
+3. Once clear, it signals completion with `/zones_clear=True` so downstream nodes can continue.
+
+**ROS Interfaces**
+
+**Parameters**
+
+* `~robot_type` (str, default: `xarm`) — Selects the MoveIt groups: `<robot_type>_gripper` and `<robot_type><dof>`.
+* `/xarm/DOF` (int, default: 6) — Degrees of freedom for the arm MoveGroup.
+
+**Publishers**
+
+* `/zones_clear` (`std_msgs/Bool`, latched) — `True` when all cubes are correctly placed and the arm is idle.
+
+**Subscribers**
+
+* Camera: `camera/image_raw/compressed` (`sensor_msgs/CompressedImage`) — RGB feed for color segmentation.
+
+**Coordinate frames and zones**
+
+* **Pixel → mm**: `rect_to_xy_mm(rect)` maps the rectangle center in pixels to **table coordinates (mm)** using a linear calibration tuned for the Gazebo scene.
+* **Target zones** (mm):
+
+  * Red → `(660, -250)`
+  * Blue → `(340, -250)`
+  * Green → `(340, 250)`
+  * Yellow → `(660, 250)`
+* **Zone size**: squares of half-width `ZONE_HALF = 60` mm. A point is *in zone* when both `|x−x0| ≤ 60` and `|y−y0| ≤ 60`.
+
+**High-level algorithm**
+
+1. **Acquire frame** from the camera queue.
+2. For each color in `COLOR_DICT`:
+
+   * Threshold in HSV, find contours, compute `minAreaRect`.
+   * Convert each rect center to `(x_mm, y_mm)`.
+   * Determine `zone_of_point(x_mm, y_mm)`.
+   * Classify and draw:
+
+     * In correct zone → **green** overlay.
+     * Off all mats (center heap) → **gray** overlay.
+     * On a wrong mat → **red** overlay, enqueue candidate correction.
+3. If there is at least one misplacement and the arm is **idle**, push a correction task into the motion queue.
+4. While the motion runs, **track** the selected cube (nearest rect to its last known pixel center) and draw it **yellow**.
+5. When there are **no misplacements** and the arm is **idle**, publish `/zones_clear=True` and exit.
+
+**Key components**
+
+**1) Color segmentation**
+
+* `COLOR_DICT` defines HSV ranges for `red`, `blue`, `green`, `yellow`.
+* `get_rects(frame, lower, upper)` performs blur → HSV → erode → `inRange` → `findContours` → `minAreaRect`.
+
+**2) Placement logic**
+
+* `zone_of_point(x_mm, y_mm)` returns which color mat contains the point, or `None` if off-mat.
+* `point_in_zone(x_mm, y_mm, color)` checks whether a point belongs to its *own* color zone.
+
+**3) Motion control thread**
+
+* `MotionThread` owns the **MoveIt** arm (`ArmCtrl`) and gripper (`GripperCtrl`).
+* Safe sequencing:
+
+  * Open gripper → **lift to safe Z** → move in XY → descend → close → lift → move to target zone → open.
+* Consumes tasks from a `Queue` with payload `{'rects': [...], 'color': <str>}`.
+
+**4) Display overlay**
+
+* `Display` manages a resizable OpenCV window and optional video recording.
+* Color conventions are centralized in `COLOR_BGR`.
+* Windows are disabled automatically if `DISPLAY` is absent (headless run).
+
+**Configuration knobs you can tune**
+
+* **HSV ranges** in `COLOR_DICT` for your lighting and colors.
+* **Zone centers** in `COLOR_TARGET_ZONE` and **half-size** via `ZONE_HALF`.
+* **Safe and grasp heights** in `MotionThread` constructor (`safe_z`, `grab_z`).
+* **Window size** via `Display(size=(w,h))` and the immediate resize calls:
+
+  ```python
+  cv2.namedWindow("Zone Checker Camera", cv2.WINDOW_NORMAL)
+  cv2.resizeWindow("Zone Checker Camera", 640, 480)
+  ```
+* **De-dup threshold** for previously processed cubes: `hypot(...) < 15`.
+
+**Typical run sequence (pseudolog)**
+
+```
+[INFO] Zone check (phase 0) – OK:2 WRONG:1 CENTER:3
+[INFO] Dispatching correction → Fix: red
+[INFO] Correcting misplacement (tracking red)
+[INFO] ✓ Todos los tapetes tienen bloques correctos.
+[INFO] ✓ Tarea completada... publicando /zones_clear=True
+```
+---
 
 ## 📸 Results
 
