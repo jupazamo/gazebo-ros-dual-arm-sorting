@@ -355,7 +355,7 @@ A ROS node that **verifies cube placement by color**, highlights any misplacemen
 ```
 
 ---
-### `color\_recognition.py`
+### `color_recognition.py`
 
 A ROS node that finishes the workflow by **sorting the remaining cubes** (those left at the table center) **by color**, one color at a time. It subscribes to a compressed RGB camera stream, detects colored blocks via OpenCV (HSV masking + contour geometry), and commands the xArm manipulator (MoveIt) to pick each block and place it on its designated mat.
 
