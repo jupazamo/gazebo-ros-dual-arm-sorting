@@ -112,17 +112,6 @@ A lightweight orchestrator that runs the three main nodes in sequence using the 
 **Why namespaces?**
 Two arms are spawned in the scene. Namespacing (`xarm` / `xarm2`) prevents topic collisions between controllers, MoveIt groups, and camera subscribers/publishers.
 
-**Minimum requirements**
-
-* Python 3 (shebang `#!/usr/bin/env python3`)
-* ROS environment sourced (`source devel/setup.bash`)
-* Executable permission set: `chmod +x xarm_gazebo/scripts/script_launcher.py`
-* The following nodes available in your `ROS_PACKAGE_PATH`:
-
-  * `xarm_gazebo/scripts/xarm2_random_placer.py`
-  * `xarm_gazebo/scripts/zone_checker.py`
-  * `xarm_gazebo/scripts/color_recognition.py`
-
 **How to run**
 
 1. In Terminal A: `roslaunch xarm_gazebo xarm_camera_scene.launch`
@@ -151,14 +140,13 @@ subprocess.Popen(['rosrun','xarm_gazebo','xarm2_random_placer.py', f'_robot_type
 ... (final sorting logs) ...
 [SCRIPT LAUNCHER] Finalizado color_recognition.py.
 ```
+---
 
-### xarm2\_random\_placer.py
+### `xarm2\_random\_placer.py`
 
 This node makes **xArm #2** scan the table, detect four colored cubes, and place each one into a randomly assigned (non‑repeating) target zone. It couples **OpenCV** color segmentation with **MoveIt** motion execution.
 
----
-
-## What it does (high level)
+**What it does (high level)**
 
 1. **Phase 1 – Scan:** subscribes to the RGB camera (`sensor_msgs/CompressedImage`), segments red/blue/green/yellow regions, and detects one rectangle per color.
 2. **Phase 2 – Execute:** randomly permutes four destination zones and, for each detected color:
@@ -168,19 +156,7 @@ This node makes **xArm #2** scan the table, detect four colored cubes, and place
    * executes a pick at a safe approach, grasps, lifts, and places at the assigned zone
    * overlays a **single highlighted bounding box** on the live camera for the cube currently being moved.
 
----
-
-## Minimal requirements
-
-* **ROS 1 (Noetic recommended)**
-* **Gazebo 11**
-* **MoveIt** configured for `xarm6`
-* `xarm_ros` packages (from this repo) built with `catkin_make`
-* A camera topic publishing `…/compressed` images (e.g., RealSense D435 sim)
-
----
-
-## Parameters (ROS)
+**Parameters (ROS)**
 
 | Name            | Type      |                       Default | Meaning                                                                    |
 | --------------- | --------- | ----------------------------: | -------------------------------------------------------------------------- |
@@ -199,19 +175,15 @@ This node makes **xArm #2** scan the table, detect four colored cubes, and place
 * `ZONE_RANDOM_OFFSET` (random jitter inside a zone)
 * `MAX_BLOCK_AREA_PX` (filters out large contours such as mats)
 
----
-
-## Topics & I/O
+**Topics & I/O**
 
 * **Subscribe:** `~camera_topic` (`sensor_msgs/CompressedImage`)
 * **MoveIt groups:** `xarm6` (or namespaced) and `xarm_gripper`
 * **No custom publishers** (visual feedback is via OpenCV window and optional MP4 recording)
 
----
+**Key components in the script**
 
-## Key components in the script
-
-### 1) Vision
+**1) Vision**
 
 * `get_recognition_rects(frame, lower, upper)`
 
@@ -222,18 +194,18 @@ This node makes **xArm #2** scan the table, detect four colored cubes, and place
   * `draw_minarearect` draws a labeled box **only** for the cube currently being moved
   * Live display handled by `Display.show()` with optional recording
 
-### 2) Pixel → millimeters → robot base
+**2) Pixel → millimeters → robot base**
 
 * `rect_to_xy_mm(rect)` converts the **pixel center** of the rectangle to **table mm** using a calibrated affine mapping
 * `mesa_to_robot(x_mm, y_mm, dx, dy, dθ)` rotates and translates table coordinates to the robot base using `~base_tf`
 
-### 3) Motion execution
+**3) Motion execution**
 
 * `XArmCtrl.moveto(x, y, z)` sets a pose goal (keeping current orientation), MoveIt plans and executes
 * `GripperCtrl.open()/close()` actuates the named targets `open` / `close`
 * `MotionThread` consumes tasks from a queue: pick at source (approach→grasp→lift), place at destination (approach→open)
 
-### 4) Flow (main loop)
+**4) Flow (main loop)**
 
 1. **Detection phase** until all 4 colors are located.
 2. Randomly assign the four `TARGET_ZONES`.
@@ -244,24 +216,11 @@ This node makes **xArm #2** scan the table, detect four colored cubes, and place
    * enqueue a pick‑and‑place task, then visually **track the same color** during motion by selecting the nearest current rect to the original center
 4. After all moves, send the arm to `home` and exit.
 
----
 
-## Coordinate notes & calibration
+**Coordinate notes & calibration**
 
 * The `rect_to_xy_mm` mapping constants (466, 552, 900/460, offsets) were calibrated for this scene; if you change camera intrinsics, table pose, or image size, recalibrate these values.
 * Use `~base_tf` when your **table origin** is not perfectly aligned with the robot base frame.
-
----
-
-## Troubleshooting
-
-* **No camera window / crash over SSH**: the script auto‑disables GUI if `$DISPLAY` is unset. To force headless mode, keep `record_path=None` or run with a virtual display.
-* **MoveIt fails to plan**: verify collision scene, reachable `grab_z`, and that the gripper is not colliding. Increase `safe_z`.
-* **Wrong color picked**: adjust `COLOR_DICT` HSV bounds; use `hsv_inspector.py` to find good thresholds.
-* **Boxes (mats) being detected**: decrease `MAX_BLOCK_AREA_PX` to reject large contours.
-* **Coordinates shifted**: tune the offsets in `rect_to_xy_mm` or the `~base_tf` dx/dy/dθ.
-
----
 
 ## Example output (abridged)
 
@@ -277,7 +236,6 @@ Soltando en (Mesa: 635.0, -245.0)
 ...
 ✓ Tarea completada: 4 bloques redistribuidos aleatoriamente.
 ```
-
 
 ---
 
