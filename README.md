@@ -222,7 +222,7 @@ This node makes **xArm #2** scan the table, detect four colored cubes, and place
 * The `rect_to_xy_mm` mapping constants (466, 552, 900/460, offsets) were calibrated for this scene; if you change camera intrinsics, table pose, or image size, recalibrate these values.
 * Use `~base_tf` when your **table origin** is not perfectly aligned with the robot base frame.
 
-## Example output (abridged)
+**Example output**
 
 ```
 [INFO] FASE 1: Escaneando la mesa...
