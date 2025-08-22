@@ -142,7 +142,7 @@ subprocess.Popen(['rosrun','xarm_gazebo','xarm2_random_placer.py', f'_robot_type
 ```
 ---
 
-### `xarm2\_random\_placer.py`
+### `xarm2_random_placer.py`
 
 This node makes **xArm #2** scan the table, detect four colored cubes, and place each one into a randomly assigned (non‑repeating) target zone. It couples **OpenCV** color segmentation with **MoveIt** motion execution.
 
