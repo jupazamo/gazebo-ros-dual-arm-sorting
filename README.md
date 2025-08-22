@@ -90,8 +90,3 @@ Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 [... full BSD-3-Clause license text ...]
 ```
-
-## 🙌 Acknowledgements
-
-* **UFactory** for providing the original `xarm_ros` package.
-* ROS and Gazebo communities for open-source tools and documentation.
