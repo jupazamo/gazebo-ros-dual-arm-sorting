@@ -445,9 +445,32 @@ start node → init MoveIt and camera → while not shutdown:
 
 ## 📸 Results
 
-![Simulation Example](docs/simulation_example.png)
+**Figure 1.** Fase 1 – Random selection of four cubes without repetition.  
+![Figure 1](docs/fig1_random_selection.png)
 
-## 🙌 Acknowledgements
+**Figure 2.** Coordinate calculation for the selected cube.  
+![Figure 2](docs/fig2_coordinate_calculation.png)
 
-* **UFactory** for the original `xarm_ros` package
-* ROS and Gazebo communities for open-source tools
+**Figure 3.** Execution of movement: red cube.  
+![Figure 3](docs/fig3_move_red.png)
+
+**Figure 4.** Execution of movement: green cube.  
+![Figure 4](docs/fig4_move_green.png)
+
+**Figure 5.** Execution of movement: yellow cube.  
+![Figure 5](docs/fig5_move_yellow.png)
+
+**Figure 6.** Execution of movement: blue cube.  
+![Figure 6](docs/fig6_move_blue.png)
+
+**Figure 7.** Result of random redistribution in Gazebo.  
+![Figure 7](docs/fig7_random_result.png)
+
+**Figure 8.** Verification process by the second robot.  
+![Figure 8](docs/fig8_verification.png)
+
+**Figure 9.** Correction of cube placement.  
+![Figure 9](docs/fig9_correction.png)
+
+**Figure 10.** Final arrangement of all cubes.  
+![Figure 10](docs/fig10_final_arrangement.png)
