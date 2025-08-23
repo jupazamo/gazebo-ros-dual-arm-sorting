@@ -22,12 +22,47 @@ Color detection uses **OpenCV**, and the available camera model is **RealSense D
 * Predefined sorting positions per color
 * ROS-integrated launch files for quick setup
 
-## 📦 Requirements
+## 📦 Dependencies
 
-* ROS Noetic
-* Gazebo 11
-* MoveIt
-* Ubuntu 20.04 LTS
+To run this project successfully, ensure the following dependencies are installed:
+
+### 1. ROS Noetic
+
+* Follow the official installation guide: [ROS Noetic Installation](http://wiki.ros.org/noetic/Installation/Ubuntu)
+
+### 2. Gazebo
+
+* Installed by default with ROS Noetic desktop-full:
+
+```bash
+sudo apt install ros-noetic-desktop-full
+```
+
+### 3. xArm ROS Packages
+
+```bash
+sudo apt install ros-noetic-moveit ros-noetic-ros-control ros-noetic-ros-controllers ros-noetic-gazebo-ros
+```
+
+### 4. Additional Dependencies
+
+```bash
+sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools python3-pip
+pip3 install rospkg numpy opencv-python
+```
+
+### 5. Initialize rosdep
+
+```bash
+sudo rosdep init
+rosdep update
+```
+
+After installing these dependencies, build your workspace with:
+
+```bash
+catkin_make
+```
 
 ## ⚙️ Installation
 
@@ -42,9 +77,13 @@ source devel/setup.bash
 ## 🚀 Usage
 
 Run in separate terminals:
-
+Terminal 1:
 ```bash
-roslaunch xarm_gazebo xarm_camera_scene.launch
+rosrun xarm_gazebo script_launcher.py
+```
+
+Terminal 2:
+```bash
 rosrun xarm_gazebo script_launcher.py
 ```
 
