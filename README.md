@@ -80,7 +80,7 @@ Run in separate terminals:
 
 Terminal 1:
 ```bash
-rosrun xarm_gazebo script_launcher.py
+roslaunch xarm_gazebo xarm_camera_scene.launch
 ```
 
 Terminal 2:
