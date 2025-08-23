@@ -77,6 +77,7 @@ source devel/setup.bash
 ## 🚀 Usage
 
 Run in separate terminals:
+
 Terminal 1:
 ```bash
 rosrun xarm_gazebo script_launcher.py
