@@ -51,7 +51,7 @@ sudo apt install -y build-essential python3-pip \
 
 ---
 
-### 3. MoveIt and Utilities (new)
+### 3. MoveIt and Utilities
 
 Required for planners and examples:
 
