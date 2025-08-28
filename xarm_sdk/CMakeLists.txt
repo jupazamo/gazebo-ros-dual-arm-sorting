@@ -42,7 +42,7 @@ include_directories(
 )
 
 file(GLOB_RECURSE CXX_SDK_SRC_FILES ${CXX_SDK_SRC}/*.cc)
-# list(APPEND CXX_SDK_SRC_FILE_LIST ${CXX_SDK_SRC_FILES})
+list(APPEND CXX_SDK_SRC_FILE_LIST ${CXX_SDK_SRC_FILES})
 set(CXX_SDK_SRC_FILE_LIST "")
 foreach(f ${CXX_SDK_SRC_FILES})
   if (NOT f MATCHES "bak")
