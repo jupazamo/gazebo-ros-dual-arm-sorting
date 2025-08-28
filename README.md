@@ -22,47 +22,103 @@ Color detection uses **OpenCV**, and the available camera model is **RealSense D
 * Predefined sorting positions per color
 * ROS-integrated launch files for quick setup
 
-## 📦 Dependencies
+# 📦 Dependencies
 
-To run this project successfully, ensure the following dependencies are installed:
+To run this project on **Ubuntu 20.04 + ROS Noetic**, ensure the following packages are installed. This keeps the structure of the original section but includes the additional requirements from the updated version.
+
+---
 
 ### 1. ROS Noetic
 
-* Follow the official installation guide: [ROS Noetic Installation](http://wiki.ros.org/noetic/Installation/Ubuntu)
+Follow the official guide: [ROS Noetic Installation](http://wiki.ros.org/noetic/Installation/Ubuntu)
 
-### 2. Gazebo
-
-* Installed by default with ROS Noetic desktop-full:
+If ROS is not installed:
 
 ```bash
-sudo apt install ros-noetic-desktop-full
+sudo apt update
+sudo apt install -y ros-noetic-desktop-full
 ```
 
-### 3. xArm ROS Packages
+---
+
+### 2. Base Tools
 
 ```bash
-sudo apt install ros-noetic-moveit ros-noetic-ros-control ros-noetic-ros-controllers ros-noetic-gazebo-ros
+sudo apt install -y build-essential python3-pip \
+  python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool \
+  python3-catkin-tools
 ```
 
-### 4. Additional Dependencies
+---
+
+### 3. MoveIt and Utilities (new)
+
+Required for planners and examples:
 
 ```bash
-sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools python3-pip
-pip3 install rospkg numpy opencv-python
+sudo apt install -y ros-noetic-moveit \
+  ros-noetic-moveit-servo \
+  ros-noetic-moveit-visual-tools
 ```
 
-### 5. Initialize rosdep
+---
+
+### 4. Controller Stack for Gazebo (new)
+
+Provides the controller manager and trajectory controllers in simulation:
 
 ```bash
-sudo rosdep init
+sudo apt install -y ros-noetic-gazebo-ros-control \
+  ros-noetic-ros-control ros-noetic-ros-controllers \
+  ros-noetic-combined-robot-hw
+```
+
+---
+
+### 5. Common xArm and Visualization Dependencies
+
+```bash
+sudo apt install -y ros-noetic-gazebo-ros \
+  ros-noetic-robot-state-publisher \
+  ros-noetic-joint-state-publisher \
+  ros-noetic-joint-state-controller
+```
+
+**(Recommended for camera topics)**:
+
+```bash
+sudo apt install -y ros-noetic-image-transport ros-noetic-compressed-image-transport
+```
+
+---
+
+### 6. Python Libraries
+
+```bash
+pip3 install --user numpy opencv-python rospkg
+```
+
+---
+
+### 7. Initialize rosdep and Resolve Workspace Dependencies (new)
+
+```bash
+sudo rosdep init || true
 rosdep update
+rosdep install --from-paths ~/catkin_ws/src --ignore-src -r -y
 ```
 
-After installing these dependencies, build your workspace with:
+---
+
+### 8. Build the Workspace
 
 ```bash
-catkin_make
+cd ~/catkin_ws
+catkin_make   # or: catkin build
+source devel/setup.bash
 ```
+
+---
 
 ## ⚙️ Installation
 
@@ -73,6 +129,8 @@ cd ~/catkin_ws
 catkin_make
 source devel/setup.bash
 ```
+
+---
 
 ## 🚀 Usage
 
