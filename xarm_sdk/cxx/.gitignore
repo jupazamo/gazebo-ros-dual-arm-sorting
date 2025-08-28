@@ -267,3 +267,7 @@ ModelManifest.xml
 CMakeLists.txt
 *.old
 example/0000*
+
+# allow core debug sources
+!src/xarm/core/debug/
+!src/xarm/core/debug/**
