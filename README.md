@@ -124,7 +124,7 @@ source devel/setup.bash
 
 ```bash
 cd ~/catkin_ws/src
-git clone https://github.com/jupazamo/gazebo-ros-dual-arm-sorting.git
+git clone https://github.com/jupazamo/xarm_ros.git
 cd ~/catkin_ws
 catkin_make
 source devel/setup.bash
